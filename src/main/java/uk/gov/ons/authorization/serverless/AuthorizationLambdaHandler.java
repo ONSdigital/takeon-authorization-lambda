@@ -34,6 +34,7 @@ public class AuthorizationLambdaHandler implements RequestHandler<AuthorizationR
     private static final String XSTREAM_VALUE = "true";
     private static final String CHARACTER_SET = "US-ASCII";
     private static final String BASIC = "Basic ";
+    private static final String COLON = ":";
 
     /**
      * @param request AuthorizationRequest
@@ -81,7 +82,7 @@ public class AuthorizationLambdaHandler implements RequestHandler<AuthorizationR
      */
     private HttpPost createConnectivity(String restUrl, String username, String password) {
         HttpPost post = new HttpPost(restUrl);
-        String auth = new StringBuilder(username).append(":").append(password).toString();
+        String auth = new StringBuilder(username).append(COLON).append(password).toString();
         byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(Charset.forName(CHARACTER_SET)));
         String authHeader = BASIC + new String(encodedAuth);
         post.setHeader(AUTHORIZATION, authHeader);
