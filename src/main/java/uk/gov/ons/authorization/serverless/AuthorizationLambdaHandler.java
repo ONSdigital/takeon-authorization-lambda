@@ -35,24 +35,28 @@ public class AuthorizationLambdaHandler implements RequestHandler<AuthorizationR
     private static final String CHARACTER_SET = "US-ASCII";
     private static final String BASIC = "Basic ";
 
-
+    /**
+     * @param request AuthorizationRequest
+     * @param context Context
+     * @return HandlerResponse The response containing CSRF Token
+     */
 
     @Override
     public HandlerResponse handleRequest(AuthorizationRequest request, Context context) {
 
-        HandlerResponse responseResult  ;
+        HandlerResponse responseResult;
         String responseData;
         HttpStatusInfo statusInfo = new HttpStatusInfo();
         try {
             log.info("Refresh Groups {} ", request.getRefresh_groups());
             log.info("Requested Lifetime {} ", request.getRequested_lifetime());
-            String restUrl =  PropertiesUtil.getProperty(Constants.EXTERNAL_URL);
+            String restUrl = PropertiesUtil.getProperty(Constants.EXTERNAL_URL);
             String username = PropertiesUtil.getProperty(Constants.USER_NAME);
             String password = PropertiesUtil.getProperty(Constants.PASSWORD);
             String jsonRequestData = new ObjectMapper().writeValueAsString(request);
 
-            HttpPost httpPost=createConnectivity(restUrl , username, password);
-            responseData = executeReq( jsonRequestData, httpPost, statusInfo);
+            HttpPost httpPost = createConnectivity(restUrl, username, password);
+            responseData = executeReq(jsonRequestData, httpPost, statusInfo);
             ObjectMapper mapper = new ObjectMapper();
             responseResult = mapper.readValue(responseData, HandlerResponse.class);
             responseResult.setStatusCode(statusInfo.getStatusCode());
@@ -60,13 +64,21 @@ public class AuthorizationLambdaHandler implements RequestHandler<AuthorizationR
         } catch (Exception e) {
             log.error("An exception was raised handling the Authorization Lambda request.", e);
             processExceptionAn(e, statusInfo);
-            HandlerResponse exceptionResponse = HandlerResponse.builder().statusCode(statusInfo.getStatusCode()).exceptionInfo(statusInfo.getExceptionInfo()).build();
+            HandlerResponse exceptionResponse = HandlerResponse.builder()
+                    .statusCode(statusInfo.getStatusCode())
+                    .exceptionInfo(statusInfo.getExceptionInfo()).build();
             return exceptionResponse;
         }
         return responseResult;
     }
 
 
+    /**
+     * @param restUrl  String IBM URL
+     * @param username String IBM UserName
+     * @param password String IBM Password
+     * @return HttpPost Post Connection
+     */
     private HttpPost createConnectivity(String restUrl, String username, String password) {
         HttpPost post = new HttpPost(restUrl);
         String auth = new StringBuilder(username).append(":").append(password).toString();
@@ -80,12 +92,12 @@ public class AuthorizationLambdaHandler implements RequestHandler<AuthorizationR
     }
 
     /**
-     *
      * @param jsonData String
      * @param httpPost HttpPost
      * @return executeResult String
      */
-    private String executeReq(String jsonData, HttpPost httpPost, HttpStatusInfo statusInfo) throws IOException{
+    private String executeReq(String jsonData, HttpPost httpPost, HttpStatusInfo statusInfo)
+            throws IOException {
         String executeResult;
         try {
             executeResult = executeHttpRequest(jsonData, httpPost, statusInfo);
@@ -106,16 +118,14 @@ public class AuthorizationLambdaHandler implements RequestHandler<AuthorizationR
     }
 
     /**
-     *
-     * @param e
-     * @param statusInfo
+     * @param excep      Exception
+     * @param statusInfo HttpStatusInfo
      */
-    private void processExceptionAn(Exception e, HttpStatusInfo statusInfo) {
-        statusInfo.setExceptionInfo(e.getMessage());
+    private void processExceptionAn(Exception excep, HttpStatusInfo statusInfo) {
+        statusInfo.setExceptionInfo(excep.getMessage());
     }
 
     /**
-     *
      * @param jsonData String
      * @param httpPost HttpPost
      * @return result String
@@ -133,15 +143,16 @@ public class AuthorizationLambdaHandler implements RequestHandler<AuthorizationR
             log.info("Post parameters  {} ", jsonData);
             log.info("Response Code {} ", response.getStatusLine().getStatusCode());
             statusInfo.setStatusCode(String.valueOf(response.getStatusLine().getStatusCode()));
-            BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity()
+                    .getContent()));
             while ((line = reader.readLine()) != null) {
                 result.append(line);
             }
             log.info("Final Result from IBM {} ", result.toString());
 
-        } catch(IOException eIO) {
+        } catch (IOException eIO) {
             throw eIO;
-        } catch(Exception e) {
+        } catch (Exception e) {
             throw e;
         }
 

@@ -20,7 +20,7 @@ authorising subsequent calls from other Lambda functions.
    "statusCode": "201"
  }
 
- 
+
 
 ### **Configuration**
 
